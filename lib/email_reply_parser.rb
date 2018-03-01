@@ -133,6 +133,13 @@ class EmailReplyParser
   private
     EMPTY = "".freeze
     SIGNATURE = '(?m)(--\s*$|__\s*$|\w-$)|(^(\w+\s*){1,3} ym morf tneS$)'
+    QUOTE_HEADER_REGULAR_EXPRESSIONS = [
+      # English
+      /^On.*wrote:$/,
+
+      # Gmail in Dutch
+      /^Op \d{1,2}.*om.*schreef.*:/
+    ]
 
     begin
       require 're2'
@@ -169,6 +176,7 @@ class EmailReplyParser
       # If the line matches the current fragment, add it.  Note that a common
       # reply header also counts as part of the quoted Fragment, even though
       # it doesn't start with `>`.
+
       if @fragment &&
           ((@fragment.quoted? == is_quoted) ||
            (@fragment.quoted? && (quote_header?(line) || line == EMPTY)))
@@ -188,7 +196,8 @@ class EmailReplyParser
     #
     # Returns true if the line is a valid header, or false.
     def quote_header?(line)
-      line =~ /^:etorw.*nO$/
+      actual_line = line.reverse
+      QUOTE_HEADER_REGULAR_EXPRESSIONS.any? { |regexp| actual_line =~ regexp }
     end
 
     # Builds the fragment string and reverses it, after all lines have been
